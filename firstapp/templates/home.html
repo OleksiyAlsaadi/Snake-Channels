@@ -1,0 +1,214 @@
+{% extends "default.html" %}
+{% load static %}
+
+{% load staticfiles %}
+
+{% static "channels/js/websocketbridge.js" %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+
+<div class="top-bar" id="main-menu">
+  <div class="top-bar-left">
+    <ul class="dropdown menu" data-dropdown-menu>
+      <li class="menu-text"> Smoke </li>
+    </ul>
+  </div>
+  <div class="top-bar-left">
+
+        <form>
+          {% csrf_token %}
+          <div class="row">
+            <!-- <div class="columns">
+              {{ form.errors }}
+              {{ form.suggestion.label }}
+              {{ form.suggestion }}
+            </div> -->
+
+          </div>
+        </form>
+      <!-- <li><a href="/">Save </a></li> -->
+  </div>
+
+  <div class="top-bar-left">
+    <form>
+      {% csrf_token %}
+      <input type="submit" class="button" id="clear" value="Apply">
+    </form>
+  </div>
+
+  <div class="top-bar-left">
+    <a href="/snake">Snake </a>
+    <br>
+    <a href="/">Smoke </a>
+  </div>
+
+</div>
+
+<!-- {% if user.is_authenticated %} -->
+<!-- {% else %} -->
+<!-- {% endif %} -->
+
+<div class="row">
+  <div class="large-5 columns">
+    <form action="" method="post">
+
+      <!-- <form>
+        {% csrf_token %}
+        <div class="large-12 columns">
+          {{ form.errors }}
+          {{ form.number.label }}
+          {{ form.number }}
+        </div>
+        <div class="large-5 columns">
+          <input type="submit" class="button" id="save" value="Save">
+        </div>
+      </form> -->
+
+      </div>
+
+    </form>
+  </div>
+
+  <div class="large-7 columns">
+
+    <br>
+    <canvas id="ctx" width="800" height="512" style="border:1px solid #000000;"></canvas>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+  var ctx = document.getElementById('ctx').getContext("2d");
+  var WIDTH = document.getElementById('ctx').width;
+  var HEIGHT = document.getElementById('ctx').height;
+
+
+  var size = 16;
+  var sizex = 50;
+  var sizey = 32;
+  var cell = new Array(sizex*sizey);
+  var old_cell = new Array(sizex*sizey);
+  var inc = 0;
+  var delay = 0;
+  var upd = 180;
+  var name;
+  var score = 0;
+
+  //Necessary to run because of Snake
+  var id = 0;
+  var dir = 0;
+  var killed = 0;
+
+  var mousex;
+  var mousey;
+  // Note that the path doesn't matter right now; any WebSocket
+  // connection gets bumped over to WebSocket consumers
+
+  socket = new WebSocket("ws://" + window.location.host + "/smoke/");
+  socket.onopen = function() {
+      var mouse = new Array(mousex, mousey);
+      var data = {
+        "game": "home",
+        "x": mousex,
+        "y": mousey,
+        "score": score,
+        "id": id,
+        "dir": dir,
+        "killed": killed,
+
+      }
+      //var data = new Array(snakex, snakey);
+      //var mouse = {'x':mousex, 'y':mousey};
+      if (cell[Math.floor(mousex/size)+Math.floor(mousey/size)*sizex] != 1 && mousex != undefined){
+        socket.send(JSON.stringify(data));
+      }
+  }
+  socket.onmessage = function(e) {
+      var data = JSON.parse(e.data);
+      var mx = encodeURI(data['mx']);
+      var my = encodeURI(data['my']);
+      //var x = mx.split(',');
+      //var my = encodeURI(data['my']);
+      inc = encodeURI(data['inc']);
+      document.getElementById("clear").value = inc;
+      var x = [mx,my];
+      if (x[0] < sizex*size && x[1] < sizey*size){
+         cell[Math.floor(x[0]/size)+Math.floor(x[1]/size)*sizex] = 1;
+         cell[Math.floor(x[0]/size)+Math.floor(x[1]/size)*sizex+1] = 1;
+         cell[Math.floor(x[0]/size)+Math.floor(x[1]/size)*sizex-1] = 1;
+         cell[Math.floor(x[0]/size)+Math.floor(x[1]/size)*sizex+sizex] = 1;
+         cell[Math.floor(x[0]/size)+Math.floor(x[1]/size)*sizex-sizex] = 1;
+      }
+  }
+  if (socket.readyState == WebSocket.OPEN) socket.onopen();
+
+  ctx.canvas.addEventListener('mousemove', function(event){
+  	mousex = event.clientX - ctx.canvas.offsetLeft;
+  	mousey = event.clientY - ctx.canvas.offsetTop;
+    delay -= 1;
+    if (delay<=0){
+      delay = 5;
+      socket.onopen();
+    }else{
+      ctx.fillRect(Math.floor(mousex/16)*size,Math.floor(mousey/16)*size,size,size);
+    }
+  });
+
+  function animate(){
+    old_cell = cell;
+    if (inc < 0){
+      /*for(var n=0; n<cell.length; n+=1){
+        var c = 0;
+        if (cell[n+1] == 1){ c+=1; }
+        if (cell[n-1] == 1){ c+=1; }
+        if (cell[n+sizex] == 1){ c+=1; }
+        if (cell[n-sizex] == 1){ c+=1; }
+        //if (cell[n+1+sizex] == 1){ c+=1; }
+        //if (cell[n-1+sizex] == 1){ c+=1; }
+        //if (cell[n+1-sizex] == 1){ c+=1; }
+        //if (cell[n-1-sizex] == 1){ c+=1; }
+        if (c==2){ old_cell[n] = 1; }
+        if (c<=1 || c>3){ old_cell[n] = 0; }
+      }*/
+    }else{
+      for(var n=0; n<cell.length; n+=1){
+        var c = 0;
+        if (cell[n+1] == 1){ c+=1; }
+        if (cell[n-1] == 1){ c+=1; }
+        if (cell[n+sizex] == 1){ c+=1; }
+        if (cell[n-sizex] == 1){ c+=1; }
+        if (cell[n+1+sizex] == 1){ c+=1; }
+        if (cell[n-1+sizex] == 1){ c+=1; }
+        //if (cell[n+1-sizex] == 1){ c+=1; }
+        //if (cell[n-1-sizex] == 1){ c+=1; }
+        if (c==3){ old_cell[n] = 1; }
+        if (c<=2 || c>4){ old_cell[n] = 0; }
+      }
+    }
+    cell = old_cell;
+    for(var n=0; n<cell.length; n+=1){
+      if (cell[n]){
+        ctx.fillRect(n%sizex*size,Math.floor(n/sizex)*size,size, size);
+      }
+    }
+
+  }
+
+  setInterval(update,200);
+  function update(){
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    animate();
+  }
+
+</script>
+
+{% endblock %}

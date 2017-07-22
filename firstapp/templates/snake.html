@@ -1,0 +1,355 @@
+{% extends "default.html" %}
+{% load static %}
+
+{% load staticfiles %}
+
+{% static "channels/js/websocketbridge.js" %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+
+<div class="top-bar" id="main-menu">
+  <div class="top-bar-left">
+    <ul class="dropdown menu" data-dropdown-menu>
+      <li class="menu-text"> Snake </li>
+    </ul>
+  </div>
+  <div class="top-bar-left">
+
+        <form>
+          {% csrf_token %}
+          <div class="row">
+            <div class="columns">
+              {{ form.errors }}
+              {{ form.suggestion.label }}
+              {{ form.suggestion }}
+            </div>
+
+          </div>
+        </form>
+
+  </div>
+
+  <div class="top-bar-left">
+    <form>
+      {% csrf_token %}
+      <input type="submit" class="button" id="clear" value="Apply">
+    </form>
+  </div>
+
+  <div class="top-bar-left">
+    <a href="/snake">Snake </a>
+    <br>
+    <a href="/">Smoke </a>
+  </div>
+
+</div>
+
+<div class="row">
+
+  <div class="large-7 columns">
+
+    <br>
+    <canvas id="ctx" width="800" height="512" style="border:1px solid #000000;"></canvas>
+
+    <!-- Leaderboard
+     <div id="suggest_list">
+      <ul>
+      {% for element in first %}
+      X
+      {% endfor %}
+      <br>
+      {% for element in second %}
+      O
+      {% endfor %}
+
+      </ul>
+      </div>
+    </div> -->
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+  var ctx = document.getElementById('ctx').getContext("2d");
+  var WIDTH = document.getElementById('ctx').width;
+  var HEIGHT = document.getElementById('ctx').height;
+
+  var name = prompt("Enter a Name", "");
+
+  var board = new Array(15);
+  var score = new Array(15);
+  var size = 16;
+  var sizex = 50;
+  var sizey = 32;
+  var cell = new Array(sizex*sizey);
+  var cell_id = new Array(sizex*sizey);
+
+  var inc = 0;
+  var delay = 0;
+
+  var player_score = 0;
+  var id = Math.floor(Math.random() * (99))+1;
+  var px = new Array(100);
+  var py = new Array(100);
+  var dir = new Array(100);
+  var ps = new Array(100);
+  var p_id = new Array(100);
+  for(n = 0; n < px.length; n++){
+    dir[n]=-1;
+  }
+
+  px[id] = Math.floor(Math.random() * (sizex - 0 + 1)) + 0;
+  py[id] = Math.floor(Math.random() * (sizey - 0 + 1)) + 0;
+  ps[id] = 1;
+  dir[id] = 0;
+
+
+  var pelletx = -1;
+  var pellety = -1;
+  var eaten = 0;
+  var killed = 0;
+  var mousex;
+  var mousey;
+
+  var del = 0;
+
+  var dis = 100;
+  // Note that the path doesn't matter right now; any WebSocket
+  // connection gets bumped over to WebSocket consumers
+
+  socket = new WebSocket("ws://" + window.location.host + "/snake/");
+  socket.onopen = function() {
+
+      var data = {
+        "game": "snake",
+        "name": name,
+        "score": player_score,
+        "id": id,
+        "dir": dir[id],
+        "x": px[id], "y": py[id],
+        "eaten": eaten,
+        "killed": killed,
+        //"pelletx": pelletx,
+        //"pellety": pellety,
+      }
+      eaten = 0;
+      killed = 0;
+      //var data = new Array(snakex, snakey);
+      socket.send(JSON.stringify(data));
+  }
+  socket.onmessage = function(e) {
+      var data = JSON.parse(e.data);
+      var idd = encodeURI(data['id']);
+      var mx = encodeURI(data['mx']);
+      var my = encodeURI(data['my']);
+//console.log(mx+","+my+"  id"+id);
+      var ptx = encodeURI(data['pelletx']);
+      var pty = encodeURI(data['pellety']);
+      var dirr = encodeURI(data['dir']);
+      var kill = encodeURI(data['killed']);
+
+      //var joined = encodeURI(data['joined']);
+
+      inc = encodeURI(data['inc']);
+
+      if (inc > 0){
+        socket.onopen();
+      }
+
+      ps[idd] = encodeURI(data['player_score']);
+      p_id[idd] = idd;
+      if (idd != id){
+        px[idd] = mx;
+        py[idd] = my;
+        dir[idd] = dirr;
+      }
+      if (kill != 0){ //Player snake killed, delete trail
+        for(var n=0; n<cell.length; n+=1){
+            if (cell_id[n] == kill){
+                cell[n] = 0;
+                cell_id[n] = 0;
+            }
+        }
+      }
+
+      var board_temp = encodeURI(data['board']);
+      var r = decodeURI(board_temp);
+      var s = r.split(',');
+
+      var score_temp = encodeURI(data['score']);
+      var rr = decodeURI(score_temp);
+      var ss = rr.split(',');
+
+      document.getElementById("clear").value = inc;
+      for(n = 0; n < s.length; n++){ //Save into Leaderboard
+          board[n] = s[n];
+          score[n] = ss[n];
+      }
+      pelletx = ptx;
+      pellety = pty;
+
+  }
+  if (socket.readyState == WebSocket.OPEN) socket.onopen();
+
+  function animate(){
+
+        if (del == 1){
+          del = 0;
+          socket.onopen();
+        }
+    //if (delay<=0){
+    //console.log(px[id]+","+py[id]+"  id"+id);
+    for(n = 0; n < dir.length; n++){
+      if (dir[n]!=-1){
+        //console.log(px[n]+","+py[n]+"  id"+id);
+        cell[Math.floor(px[n])+Math.floor(py[n])*sizex] = ps[n]*3+3;
+        cell_id[Math.floor(px[n])+Math.floor(py[n])*sizex] = p_id[n];
+        if (dir[n]  == 1){ px[n] -=1; }
+        if (dir[n]  == 2){ py[n] -=1; }
+        if (dir[n]  == 3){ px[n] -=-1; }
+        if (dir[n]  == 4){ py[n] -=-1; }
+        //delay = 1;
+        if (px[n]  < 0){ px[n]  = sizex-1; }
+        if (px[n]  > sizex-1){ px[n]  = 0; }
+        if (py[n]  > sizey-1){ py[n]  = 0; }
+        if (py[n]  < 0){ py[n]  = sizey-1; }
+      }
+      //socket.onopen();
+    }
+    //delay -=1;
+
+    ctx.fillStyle = "white"; //Draw pellet
+    //var ptx = (pelletx+pellety*sizex)%sizex;
+    //var pty = Math.floor((pelletx+pellety*sizex)/sizex);
+    ctx.fillRect(pelletx*size,pellety*size,size, size);
+
+    ctx.fillStyle = "black"; //Draw All other cells
+    for(var n=0; n<cell.length; n+=1){
+      if (cell[n] > 0){
+        cell[n]-=1;
+        if (cell[n] <= 0){
+            cell_id[n] = 0;
+        }
+
+        if (cell_id[n] < 0){
+          if (cell_id[n] == cell_id[n+2] && cell[n+1] <= 0){
+            cell[n+1] = 2; cell_id[n+1] = cell_id[n];
+          }
+          if (cell_id[n] == cell_id[n-2] && cell[n-1] <= 0){
+            cell[n-1] = 2; cell_id[n-1] = cell_id[n];
+          }
+          if (cell_id[n] == cell_id[n+sizex*2] && cell[n+sizex] <= 0){
+            cell[n+sizex] = 2; cell_id[n+sizex] = cell_id[n];
+          }
+          if (cell_id[n] == cell_id[n-sizex*2] && cell[n-sizex] <= 0){
+            cell[n-sizex] = 2; cell_id[n-sizex] = cell_id[n];
+          }
+        }
+
+        ctx.fillRect(n%sizex*size,Math.floor(n/sizex)*size,size, size);
+      }
+    }
+
+    for(n = 0; n < px.length; n++){
+      if (dir[n]!=-1){
+        if (p_id[n] == id){
+          ctx.fillStyle = "limegreen";
+        }else{
+          ctx.fillStyle = "green";
+          if (dir[n] == 0){
+            dis -=1;
+            if (dis <= 0){
+              dir[n] = -1;
+              dis = 100;
+            }
+          }
+        }
+        //pxx = (px[n]+py[n]*sizex)%sizex;
+        //pyy = Math.floor((px[n]+py[n]*sizex)/sizex);
+        ctx.fillRect(px[n]*size,py[n]*size,size, size);
+      }
+    }
+
+    //pxx = (px[id]+py[id]*sizex)%sizex;
+    //pyy = Math.floor((px[id]+py[id]*sizex)/sizex);
+
+    if (cell[px[id]+py[id]*sizex] > 0 && dir[id] > 0){
+      px[id] = Math.floor(Math.random() * (sizex) );
+      py[id] = Math.floor(Math.random() * (sizey) );
+      killed = id;
+      player_score = 0;
+      dir[id] = 0;
+      socket.onopen();
+    }
+
+    for(n = 0; n < dir.length; n++){ //Killed Snake
+      if (cell[px[n]+py[n]*sizex] > 0 && dir[n] > 0){
+        killed = n;
+        dir[n] = 0;
+      }
+    }
+
+    if (px[id] == pelletx && py[id] == pellety){ //Eat Pellet
+      player_score+=1;
+      eaten = 1;
+      socket.onopen();
+      //pelletx = Math.floor(Math.random() * (sizex - 0 + 1)) + 0;
+      //pellety = Math.floor(Math.random() * (sizey - 0 + 1)) + 0;
+    }
+
+  }
+
+  function leaderboard(){
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText("Leaderboard",10,30);
+    ctx.font = "12px Arial";
+    for(n = 0; n < board.length; n++){
+        if (board[n] != undefined){
+          ctx.fillText(board[n],10,60+19*n);
+          ctx.fillText(score[n],110,60+19*n);
+        }
+    }
+
+  }
+
+  document.addEventListener("keydown",doKeyDown, false);
+  function doKeyDown(e){
+  	if (e.keyCode == "37" && dir[id] != 3){ //a
+      dir[id] = 1;
+      del = 1;
+  	}
+  	if (e.keyCode == "39" && dir[id] != 1){ //d
+      dir[id] = 3;
+  		del = 1;
+  	}
+  	if (e.keyCode == "38" && dir[id] != 4){ //w
+      dir[id] = 2;
+  		del = 1;
+  	}
+  	if (e.keyCode == "40" && dir[id] != 2){ //s
+      dir[id] = 4;
+  		del = 1;
+  	}
+  }
+
+  setInterval(update,80);
+  function update(){
+    ctx.fillStyle = "#ADD8E6";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    animate();
+    leaderboard();
+  }
+
+</script>
+
+{% endblock %}
