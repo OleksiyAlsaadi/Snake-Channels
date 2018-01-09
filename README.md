@@ -1,5 +1,7 @@
 Visit “104.197.99.74:8000/snake" to play Snake
 
+[Alt text](/snake.png?raw=true "Cover")
+
 ----------------------------------------------
 
 Starter Dev Notes:
