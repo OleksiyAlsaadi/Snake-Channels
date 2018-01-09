@@ -1,12 +1,11 @@
-Visit “104.197.99.74:8000”
+Visit “104.197.99.74:8000/snake" to play Snake
 
+----------------------------------------------
 
+Starter Dev Notes:
 
-
-
-
-
-Starter Notes:
+Linux Screen
+Ctrl-a + d
 
 python manage.py runserver 0.0.0.0:8000
 
