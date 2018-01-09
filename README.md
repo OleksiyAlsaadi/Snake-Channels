@@ -1,3 +1,13 @@
+Visit “104.197.99.74:8000”
+
+
+
+
+
+
+
+Starter Notes:
+
 python manage.py runserver 0.0.0.0:8000
 
 source ~/.virtualenvs/djangodev/bin/activate
