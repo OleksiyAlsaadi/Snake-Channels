@@ -4,10 +4,9 @@ Visit “104.197.99.74:8000/snake" to play Snake
 
 ----------------------------------------------
 
-Developer Notes
+#Developer Notes
 
 Google Cloud Terminal
-
 $ sudo apt-get install python3-pip  
 $ pip3 install virtualenv  
 $ virtualenv --python=`which python3` ~/.virtualenvs/djangodev  
@@ -15,13 +14,14 @@ $pip install -U channels
 $pip install -U redis  
 $sudo apt-get install redis-server  
 
-Activate Django:  
+
+#Activate Django:  
 . myenv/bin/activate  
 Otherwise:  
 source ~/.virtualenvs/djangodev/bin/activate  
 
 
-Start Server:   
+#Start Server:   
 Linux Screen - ctrl-a-c  
 python manage.py runserver 0.0.0.0:8000  
 
