@@ -37,7 +37,7 @@ sudo ufw allow 'Nginx HTTP'
 sudo ufw status
 sudo systemctl start nginx
 sudo systemctl stop nginx
-sudo systemctl restart nginx
+sudo systemctl restart nginx 
 
 cd /etc/nginx/sites-enabled/
 sudo vim default
