@@ -7,6 +7,7 @@ Visit “104.197.99.74:8000/snake" to play Snake
 Developer Notes
 
 Google Cloud Terminal
+
 $ sudo apt-get install python3-pip
 $ pip3 install virtualenv
 $ virtualenv --python=`which python3` ~/.virtualenvs/djangodev
