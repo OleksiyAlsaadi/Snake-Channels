@@ -14,7 +14,10 @@ $pip install -U channels
 $pip install -U redis
 $sudo apt-get install redis-server
 
+Activate Django:
 . myenv/bin/activate
+Otherwise:
+source ~/.virtualenvs/djangodev/bin/activate
 
 
 Start Server: 
@@ -41,13 +44,12 @@ sudo vim default
 daphne firstproject.asgi:channel_layer
 python manage.py runworker
 
+
 server {
     listen 80;
     server_name example.org;
     charset utf-8;
-    
     #listen 443 ssl;
-
     location / {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
