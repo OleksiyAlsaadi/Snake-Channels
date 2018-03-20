@@ -1,4 +1,4 @@
-Visit “104.197.99.74:8000/snake" to play Snake
+Visit “104.197.99.74:8000/snake" to play Snake! (If the server is running.)
 
 ![Alt text](/snake.png?raw=true "Cover")
 
@@ -22,7 +22,8 @@ source ~/.virtualenvs/djangodev/bin/activate
 
 
 ## Start Server:   
-Linux Screen - ctrl-a-c  
+Linux Screen, type 'screen'
+Then hit: 'ctrl-a c' 
 python manage.py runserver 0.0.0.0:8000  
 
 If port is taken:  
