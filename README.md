@@ -9,7 +9,7 @@ Visit “104.197.99.74:8000/snake" to play Snake! (If the server is running.)
 ## Google Cloud Terminal
 $ sudo apt-get install python3-pip  
 $ pip3 install virtualenv  
-$ virtualenv --python=`which python3` ~/.virtualenvs/djangodev  
+$ virtualenv --python=python3` ~/.virtualenvs/djangodev  
 $pip install -U channels  
 $pip install -U redis  
 $sudo apt-get install redis-server  
